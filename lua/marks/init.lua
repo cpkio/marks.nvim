@@ -185,6 +185,7 @@ local function setup_autocommands()
     autocmd!
     autocmd BufEnter * lua require'marks'.refresh(true)
     autocmd BufDelete * lua require'marks'._on_delete()
+    autocmd BufReadPost * lua require'marks'.restore()
   augroup end]]
 end
 
@@ -248,6 +249,52 @@ function M.setup(config)
 
   local timer = vim.loop.new_timer()
   timer:start(0, refresh_interval, vim.schedule_wrap(M.refresh))
+end
+
+function M:restore()
+  local store = require'marks.store'
+  local a = vim.api
+  local bufnr = a.nvim_get_current_buf()
+  local file = a.nvim_buf_get_name(0)
+  local bm = store:load_marks(file)
+
+  for _, row in pairs(bm) do
+
+      local pos = row.line
+      local text = row.annotation
+      local group_nr = row.bookmark_group
+      local group = M.bookmark_state.groups[group_nr]
+
+      if not group then
+        M.bookmark_state:init(group_nr)
+        group = M.bookmark_state.groups[group_nr]
+      end
+
+      local data = { buf = bufnr, line = pos, col = 0, sign_id = -1}
+
+      -- local display_signs = utils.option_nil(self.opt.buf_signs[bufnr], self.opt.signs)
+
+      if group.sign then
+        local id = group.sign:byte() * 100 + pos
+        M.bookmark_state:add_sign(bufnr, group.sign, pos, id)
+        data.sign_id = id
+      end
+
+      local opts = {}
+      opts.virt_lines = {{{ text, "MarkVirtTextHL" }}}
+      opts.virt_lines_above = true
+      opts.virt_lines_leftcol = false
+
+      local extmark_id = a.nvim_buf_set_extmark(bufnr, group.ns, pos, 0, opts)
+
+      data.extmark_id = extmark_id
+
+      if not group.marks[bufnr] then
+        group.marks[bufnr] = {}
+      end
+      group.marks[bufnr][pos] = data
+
+  end
 end
 
 return M

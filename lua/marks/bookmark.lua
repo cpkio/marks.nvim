@@ -1,5 +1,6 @@
 local utils = require'marks.utils'
 local a = vim.api
+local store = require'marks.store'
 
 local Bookmarks = {}
 
@@ -89,6 +90,9 @@ function Bookmarks:place_mark(group_nr, bufnr)
   end
   group.marks[bufnr][pos[1]] = data
 
+  -- Saving empty bookmark
+  store:save_mark(group_nr, pos[1]-1, '')
+
   if self.prompt_annotate[group_nr] then
     self:annotate(group_nr)
   end
@@ -115,6 +119,7 @@ function Bookmarks:delete_mark(group_nr, bufnr, line)
 
   a.nvim_buf_del_extmark(bufnr, group.ns, mark.extmark_id)
   group.marks[bufnr][line] = nil
+  store:delete_mark(group_nr, line)
 end
 
 function Bookmarks:delete_mark_cursor()
@@ -127,6 +132,7 @@ function Bookmarks:delete_mark_cursor()
   end
 
   self:delete_mark(group_nr, bufnr, pos[1])
+  store:delete_mark(group_nr, pos[1]-1)
 end
 
 function Bookmarks:delete_all(group_nr)
@@ -145,6 +151,7 @@ function Bookmarks:delete_all(group_nr)
     end
     group.marks[bufnr] = nil
   end
+  store:delete_marks(group_nr)
 end
 
 function Bookmarks:next(group_nr)
@@ -254,6 +261,7 @@ function Bookmarks:annotate(group_nr)
       id = bookmark.extmark_id, virt_lines = {{{text, "MarkVirtTextHL"}}},
       virt_lines_above=true,
     })
+    store:annotate(group_nr, bookmark.line-1, text)
   else
     a.nvim_buf_del_extmark(bufnr, self.groups[group_nr].ns, bookmark.extmark_id)
 
