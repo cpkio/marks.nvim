@@ -61,6 +61,7 @@ function Bookmarks:place_mark(group_nr, bufnr)
 
   local pos = a.nvim_win_get_cursor(0)
 
+  -- TODO : broke somehow
   if group.marks[bufnr] and group.marks[bufnr][pos[1]] then
     -- disallow multiple bookmarks on a single line
     return
@@ -91,7 +92,7 @@ function Bookmarks:place_mark(group_nr, bufnr)
   group.marks[bufnr][pos[1]] = data
 
   -- Saving empty bookmark
-  store:save_mark(group_nr, pos[1]-1, '')
+  store:save_mark(group_nr, pos[1]-1, nil, data.sign_id)
 
   if self.prompt_annotate[group_nr] then
     self:annotate(group_nr)

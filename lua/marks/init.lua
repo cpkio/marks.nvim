@@ -185,7 +185,9 @@ local function setup_autocommands()
     autocmd!
     autocmd BufEnter * lua require'marks'.refresh(true)
     autocmd BufDelete * lua require'marks'._on_delete()
+
     autocmd BufReadPost * lua require'marks'.restore()
+    autocmd BufWritePost * lua require'marks'.update()
   augroup end]]
 end
 
@@ -263,6 +265,7 @@ function M:restore()
       local pos = row.line
       local text = row.annotation
       local group_nr = row.bookmark_group
+      local sign_id = row.sign_id
       local group = M.bookmark_state.groups[group_nr]
 
       if not group then
@@ -272,13 +275,7 @@ function M:restore()
 
       local data = { buf = bufnr, line = pos, col = 0, sign_id = -1}
 
-      -- local display_signs = utils.option_nil(self.opt.buf_signs[bufnr], self.opt.signs)
-
-      if group.sign then
-        local id = group.sign:byte() * 100 + pos
-        M.bookmark_state:add_sign(bufnr, group.sign, pos, id)
-        data.sign_id = id
-      end
+      data.sign_id = sign_id
 
       local opts = {}
       opts.virt_lines = {{{ text, "MarkVirtTextHL" }}}
@@ -294,6 +291,18 @@ function M:restore()
       end
       group.marks[bufnr][pos] = data
 
+  end
+end
+
+function M:update()
+  local store = require'marks.store'
+  -- print(vim.inspect( M.bookmark_state.groups ))
+  for _, v in pairs(M.bookmark_state.groups) do
+    if #v.marks then
+      for _, w in pairs(v.marks[1]) do
+        store:save_mark(nil, w.line-1, nil, w.sign_id)
+      end
+    end
   end
 end
 

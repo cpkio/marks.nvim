@@ -7,8 +7,13 @@ local storage = sqlite {
     _id = true,
     filename = 'text',
     line = 'int',
+    sign_id = 'int',
     bookmark_group = 'int',
     annotation = 'text'
+  },
+  opts = {
+    threads = 1,
+    synchronous = 'OFF',
   }
 }
 
@@ -20,30 +25,35 @@ function M.new()
   return setmetatable({}, { __index = M })
 end
 
-function M:save_mark(group, line, text) -- сохранение закладки
+function M:save_mark(group, line, text, signid) -- сохранение закладки
   local m = bm:get{ where = {
     filename = utils.path_unify(vim.api.nvim_buf_get_name(0)),
-    line = line,
+    sign_id = signid
   }}
   if text == nil then text = '' end
   if m ~= nil and #m == 1 then
     bm:update{
-      filename = utils.path_unify(vim.api.nvim_buf_get_name(0)),
-      line = line,
-      bookmark_group = group,
-      annotation = text
+      where = {
+        filename = utils.path_unify(vim.api.nvim_buf_get_name(0)),
+        sign_id = signid
+      },
+      set = {
+        line = line,
+        bookmark_group = group,
+      }
     }
   else
     bm:insert{
       filename = utils.path_unify(vim.api.nvim_buf_get_name(0)),
       line = line,
       bookmark_group = group,
+      sign_id = signid,
       annotation = text
     }
   end
 end
 
-function M:annotate(group, line, text)
+function M:annotate(group, line, text) -- аннотирование
   bm:update{
     where = {
       filename = utils.path_unify(vim.api.nvim_buf_get_name(0)),
