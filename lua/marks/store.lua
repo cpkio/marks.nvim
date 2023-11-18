@@ -1,4 +1,5 @@
 local has_sqlite, sqlite = pcall(require, 'sqlite')
+local utils = require'marks.utils'
 
 local storage = sqlite {
   uri = vim.fn.expand('~') .. '/marks.db',
@@ -21,20 +22,20 @@ end
 
 function M:save_mark(group, line, text) -- сохранение закладки
   local m = bm:get{ where = {
-    filename = vim.api.nvim_buf_get_name(0),
+    filename = utils.path_unify(vim.api.nvim_buf_get_name(0)),
     line = line,
   }}
   if text == nil then text = '' end
   if m ~= nil and #m == 1 then
     bm:update{
-      filename = vim.api.nvim_buf_get_name(0),
+      filename = utils.path_unify(vim.api.nvim_buf_get_name(0)),
       line = line,
       bookmark_group = group,
       annotation = text
     }
   else
     bm:insert{
-      filename = vim.api.nvim_buf_get_name(0),
+      filename = utils.path_unify(vim.api.nvim_buf_get_name(0)),
       line = line,
       bookmark_group = group,
       annotation = text
@@ -45,7 +46,7 @@ end
 function M:annotate(group, line, text)
   bm:update{
     where = {
-      filename = vim.api.nvim_buf_get_name(0),
+      filename = utils.path_unify(vim.api.nvim_buf_get_name(0)),
       bookmark_group = group,
       line = line
     },
@@ -62,18 +63,20 @@ function M:load_marks(file) -- загрузка всех закладок вме
 end
 
 function M:delete_mark(group, line) -- удаление закладки
-  bm:remove{
-    filename = vim.api.nvim_buf_get_name(0),
-    bookmark_group = group,
-    line = line
+  bm:remove{ where = {
+      filename = utils.path_unify(vim.api.nvim_buf_get_name(0)),
+      bookmark_group = group,
+      line = line
+    }
   }
 end
 
 function M:delete_marks(group) -- удаление всех закладок
-  bm:remove({
-    filename = vim.api.nvim_buf_get_name(0),
-    bookmark_group = group
-  })
+  bm:remove{ where = {
+      filename = utils.path_unify(vim.api.nvim_buf_get_name(0)),
+      bookmark_group = group
+    }
+  }
 end
 
 return M

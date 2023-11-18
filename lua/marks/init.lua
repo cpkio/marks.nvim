@@ -255,7 +255,7 @@ function M:restore()
   local store = require'marks.store'
   local a = vim.api
   local bufnr = a.nvim_get_current_buf()
-  local file = a.nvim_buf_get_name(0)
+  local file = utils.path_unify(a.nvim_buf_get_name(0))
   local bm = store:load_marks(file)
 
   for _, row in pairs(bm) do

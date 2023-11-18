@@ -86,4 +86,10 @@ function M.choose_list(list_type)
   return list_fn
 end
 
+-- Transform path in every possible form to unified format to avoid sqlite
+-- table misshits
+function M.path_unify(path)
+  return path:gsub('\\','/')
+end
+
 return M
