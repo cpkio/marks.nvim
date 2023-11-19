@@ -255,7 +255,12 @@ function Bookmarks:annotate(group_nr)
     return
   end
 
-  local text = vim.fn.input("annotation: ")
+  local extmarks = vim.api.nvim_buf_get_extmarks(0, self.groups[group_nr].ns, 0, -1, { details = true})
+  local _text
+  for _, v in pairs(extmarks) do
+    if v[2] == pos[1]-1 then _text = unpack(unpack(unpack(v[4].virt_lines))) end
+  end
+  local text = vim.fn.input("annotation: ", _text)
 
   if text ~= "" then
     a.nvim_buf_set_extmark(bufnr, self.groups[group_nr].ns, bookmark.line-1, bookmark.col, {
@@ -273,6 +278,7 @@ function Bookmarks:annotate(group_nr)
     end
     bookmark.extmark_id = a.nvim_buf_set_extmark(bufnr, self.groups[group_nr].ns, bookmark.line-1,
                                                  bookmark.col, opts)
+    store:annotate(group_nr, bookmark.line-1, '')
   end
 end
 
